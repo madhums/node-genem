@@ -1,5 +1,5 @@
 ## node-gen
-A MVC generator for node.js (uses express, mongoose and passport.js). Based on [nodejs-express-demo](http://github.com/madhums/nodejs-express-mongoose-demo)
+A MVC generator for node.js (uses express, mongoose, jade and passport.js). Based on [nodejs-express-demo](http://github.com/madhums/nodejs-express-mongoose-demo)
 
 ## License
 (The MIT License)
