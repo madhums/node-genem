@@ -1,0 +1,14 @@
+{
+    "name": "gen"
+  , "version": "0.0.1"
+  , "description": "MVC generator for node"
+  , "keywords": ["generator", "mvc", "express", "mongoose", "jade"]
+  , "author": "Madhusudhan Srinivasa <madhums8@gmail.com>"
+  , "repository": "git://github.com/madhums/node-gen"
+  , "bin": { "gen": "./bin/gen" }
+  , "devDependencies": {
+    "should": ">= 0.0.1"
+  }
+  , "main": "index"
+  , "engines": { "node": ">= 0.4.x" }
+}
