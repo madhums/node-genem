@@ -1,6 +1,48 @@
 ## node-gen
 A MVC generator for node.js (uses express, mongoose, jade and passport.js). Based on [nodejs-express-demo](http://github.com/madhums/nodejs-express-mongoose-demo)
 
+## Installation
+
+```sh
+$ npm install gen -g
+```
+
+## Usage
+
+```
+Usage: gen [command]
+
+commands:
+
+  init                        creates the mvc boilerplate
+  model [name]                creates a model file of name [name]
+  controller [name] [methods] creates a controller file of name [name] with
+                              methods [methods] and adds it to routes
+  views [resource] [name(s)]  creates view files [names] under a folder
+                              of name [resource]
+  scaffold [name]             creates models, views and controllers of name [name]
+```
+
+## Directory structure
+
+```
+-app/
+  |__controllers/
+  |__models/
+  |__views/
+-config/
+  |__middlewares/
+  |__routes.js
+  |__express.js
+  |__config.js
+  |__passport.js (auth config)
+-test/
+-server.js
+```
+
+## To do
+everything
+
 ## License
 (The MIT License)
 
