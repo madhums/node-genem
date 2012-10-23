@@ -6,3 +6,65 @@
 
 var gen = require('../')
   , fs = require('fs')
+
+/**
+ * Arguments
+ */
+var args = process.argv.slice(2)
+
+var usage = [
+    ''
+  , '  Usage: gen [command] [options]'
+  , ''
+  , '  Commands:'
+  , ''
+  , '  init [APP]                           initializes an application with name APP'
+  , '  model [MODEL]                        creates a mongoose model MODEL'
+  , '  controller [CONTROLLER] [METHODS]    creates a controller of name CONTROLLER'
+  , '  views [VIEW] [PAGES]                 creates a view VIEW with pages PAGES'
+  , ''
+].join('\n')
+
+// abort with a message
+
+function abort(msg) {
+  console.error('  %s', msg);
+  process.exit(1);
+}
+
+/**
+ * Commands
+ */
+var commands = {}
+
+/**
+ * Option defaults.
+ */
+var options = { args: [] }
+
+/**
+ * Parse arguments
+ */
+var arg
+while (args.length) {
+  arg = args.shift()
+  switch (arg) {
+    case '-h':
+    case '--help':
+    case 'help':
+      console.log(usage)
+      process.exit()
+      break
+    default:
+      if (options.command) {
+        options.args.push(arg)
+      } else {
+        options.command = arg
+      }
+  }
+}
+
+var command = options.command || 'up'
+if (!(command in commands)) abort('unknown command "' + command + '"')
+command = commands[command]
+command.apply(this, options.args)
