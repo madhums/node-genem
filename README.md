@@ -14,13 +14,15 @@ Usage: gen [command]
 
 commands:
 
-  init                        creates the mvc boilerplate
-  model [name]                creates a model file of name [name]
-  controller [name] [methods] creates a controller file of name [name] with
-                              methods [methods] and adds it to routes
-  views [resource] [name(s)]  creates view files [names] under a folder
-                              of name [resource]
-  scaffold [name]             creates models, views and controllers of name [name]
+  init [app name][options]      creates the mvc boilerplate of name [app name]
+  model [name]                  creates a model file of name [name]
+  controller [name] [methods]   creates a controller file of name [name] with
+                                methods [methods] and adds it to routes
+  views [resource] [name(s)]    creates view files [names] under a folder
+                                of name [resource]
+
+options:
+  --no-auth                     does not create any auth configs
 ```
 
 ## Directory structure
@@ -37,6 +39,7 @@ commands:
   |__config.js
   |__passport.js (auth config)
 -test/
+-public/
 -server.js
 ```
 
