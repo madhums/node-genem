@@ -21,8 +21,6 @@ commands:
   views [resource] [name(s)]    creates view files [names] under a folder
                                 of name [resource]
 
-options:
-  --no-auth                     does not create any auth configs
 ```
 
 ## Directory structure
