@@ -80,7 +80,7 @@ function createApplicationAt(path) {
     console.log('     $ cd %s && npm install', path);
     console.log();
     console.log('   run the app:');
-    console.log('     $ node app');
+    console.log('     $ npm start');
     console.log();
   });
 
@@ -140,7 +140,7 @@ function createApplicationAt(path) {
     pkg.name = program.init
 
     write(path + '/package.json', JSON.stringify(pkg, null, 2));
-    write(path + '/server.js', '');
+    write(path + '/server.js', gen.server);
   });
 }
 
