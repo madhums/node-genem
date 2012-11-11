@@ -10,17 +10,30 @@ $ npm install gen -g
 ## Usage
 
 ```
-Usage: gen [command]
+Usage: gen [options]
 
-commands:
+  Options:
 
-  init [app name][options]      creates the mvc boilerplate of name [app name]
-  model [name]                  creates a model file of name [name]
-  controller [name] [methods]   creates a controller file of name [name] with
-                                methods [methods] and adds it to routes
-  views [resource] [name(s)]    creates view files [names] under a folder
-                                of name [resource]
+    -h, --help                            output usage information
+    -V, --version                         output the version number
+    i, init <app>                         initialize app with name <app>
+    m, model <model> <fields>             creates a mongoose model of name <model> with fields <fields>
+    c, controller <controller> <methods>  creates a controller of name <controller> with methods <methods>
+    v, view <view> <views>                creates a view of name <name> with views <views>
+    -a, --auth <auth>                     adds passport.js authentication (twitter|facebook|github|google)
 
+  Examples:
+
+    $ gen --help
+    $ gen init my_app
+    $ gen model user
+    $ gen model user name:string age:number location:object
+    $ gen controller users
+    $ gen controller users create index show
+    $ gen view users
+    $ gen view users new edit show
+    $ gen --auth
+    $ gen --auth twitter facebook
 ```
 
 ## Directory structure
@@ -31,14 +44,18 @@ commands:
   |__models/
   |__views/
 -config/
-  |__middlewares/
   |__routes.js
   |__express.js
   |__config.js
   |__passport.js (auth config)
 -test/
 -public/
+  |__css/
+  |__js/
+  |__img/
 -server.js
+-package.json
+-README.md
 ```
 
 ## To do
