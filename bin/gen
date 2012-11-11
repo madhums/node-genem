@@ -17,6 +17,9 @@ var gen = require('../')
   , program = require('commander')
   , fs = require('fs')
   , path = program.args.shift() || '.'
+  , os = require('os')
+  , eol = 'win32' == os.platform() ? '\r\n' : '\n'
+
 
 program
   .version(version)
@@ -85,6 +88,12 @@ function createApplicationAt(path) {
   });
 
   mkdir(path, function(){
+    mkdir(path + '/test', function () {
+      write(path + '/test/test.js', '');
+    });
+
+    write(path + '/README.md', '## ' + program.init + eol);
+
     mkdir(path + '/public');
     mkdir(path + '/public/js');
     mkdir(path + '/public/img');
