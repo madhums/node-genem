@@ -28,6 +28,7 @@ program
   .option('c, controller <controller> <methods>', 'creates a controller of name <controller> with methods <methods>')
   .option('v, view <view> <views>', 'creates a view of name <name> with views <views>')
   .option('-a, --auth <auth>', 'adds passport.js authentication (twitter|facebook|github|google)')
+  .option('-f, --force', 'force on non-empty directory')
 
 program.on('--help', function() {
   console.log('  Examples:')
@@ -42,12 +43,95 @@ program.on('--help', function() {
   console.log('    $ gen view users new edit show')
   console.log('    $ gen --auth')
   console.log('    $ gen --auth twitter facebook')
+  console.log('')
+  console.log('if you are facing any issues - https://github.com/madhums/node-gen/issues')
 })
 
 program.parse(process.argv)
 
 
-// Generate application
+if (program.init) createApplication(path)
+else if (program.model) createModel(path)
+else if (program.view) createView(path)
+else if (program.controller) createController(path)
+
+
+/**
+ * Generate model
+ *
+ * @param {String} path
+ */
+
+function createModel (path) {
+  var file = path + '/app/models/' + program.model + '.js';
+
+  var model = function () {
+    mkdir(path + '/app/models/', function () {
+      write(file, gen.model);
+    });
+  }
+
+  if (!fs.existsSync(file) || program.force) {
+    model()
+  } else {
+    program.confirm('destination is not empty, continue? ', function(ok){
+      if (ok) {
+        process.stdin.destroy();
+        model()
+      } else {
+        abort('aborting');
+      }
+    });
+  }
+}
+
+
+/**
+ * Generate view
+ *
+ * @param {String} path
+ */
+
+function createView (path) {
+
+}
+
+
+/**
+ * Generate controller
+ *
+ * @param {String} path
+ */
+
+function createController (path) {
+  var file = path + '/app/controllers/' + program.controller + '.js';
+
+  var controller = function () {
+    mkdir(path + '/app/controllers/', function () {
+      write(file, gen.controller);
+    });
+  }
+
+  if (!fs.existsSync(file) || program.force) {
+    controller()
+  } else {
+    program.confirm('destination is not empty, continue? ', function(ok){
+      if (ok) {
+        process.stdin.destroy();
+        controller()
+      } else {
+        abort('aborting');
+      }
+    });
+  }
+}
+
+
+/**
+ * Generate application
+ *
+ * @param {String} path
+ */
 
 function createApplication(path) {
   emptyDirectory(path, function(empty){
@@ -65,9 +149,6 @@ function createApplication(path) {
     }
   });
 };
-
-if (program.init) createApplication(path)
-
 
 /**
  * Create application at the given directory `path`.
@@ -88,17 +169,16 @@ function createApplicationAt(path) {
   });
 
   mkdir(path, function(){
-    mkdir(path + '/test', function () {
-      write(path + '/test/test.js', '');
-    });
-
+    // readme
     write(path + '/README.md', '## ' + program.init + eol);
 
+    // public dir - js, css and img
     mkdir(path + '/public');
     mkdir(path + '/public/js');
     mkdir(path + '/public/img');
     mkdir(path + '/public/css');
 
+    // app dir - mvc
     mkdir(path + '/app');
     mkdir(path + '/app/models');
     mkdir(path + '/app/views');
@@ -115,6 +195,7 @@ function createApplicationAt(path) {
       write(path + '/app/views/includes/foot.jade', '');
     });
 
+    // config dir - config, express and routes
     mkdir(path + '/config');
     mkdir(path + '/config', function () {
       write(path + '/config/config.js', gen.config);
@@ -123,33 +204,17 @@ function createApplicationAt(path) {
     });
 
     // package.json
-    var pkg = {
-        name: 'application name'
-      , version: '0.0.1'
-      , engines: {
-            node: '0.6.18'
-          , npm: '1.1.9'
-        }
-      , private: true
-      , scripts: { start: './node_modules/.bin/nodemon server.js' }
-      , dependencies: {
-            'express': 'latest'
-          , 'mongoose': 'latest'
-          , 'connect-mongodb': 'latest'
-          , 'async': 'latest'
-          , 'jade': 'latest'
-        }
-      , devDependencies: {
-            'nodemon': 'latest'
-          , 'mocha': 'latest'
-          , 'should': 'latest'
-        }
-    }
-
+    var pkg = gen.pkg
     pkg.name = program.init
-
     write(path + '/package.json', JSON.stringify(pkg, null, 2));
+
+    // server (bootstrap)
     write(path + '/server.js', gen.server);
+
+    // test dir
+    mkdir(path + '/test', function () {
+      write(path + '/test/test.js', '');
+    });
   });
 }
 
