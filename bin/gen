@@ -1,68 +1,197 @@
 #!/usr/bin/env node
 
+/*!
+ * gen
+ * Copyright(c) 2012 Madhusudhan Srinivasa <madhums8@gmail.com>
+ * MIT Licensed
+ */
+
 /**
  * Module dependencies.
  */
 
-var Gen = require('../')
+var gen = require('../')
+  , pkg = require('../package.json')
+  , version = pkg.version
+  , mkdirp = require('mkdirp')
+  , program = require('commander')
   , fs = require('fs')
+  , path = program.args.shift() || '.'
+
+program
+  .version(version)
+  .option('i, init <app>', 'initialize app with name <app>')
+  .option('m, model <model> <fields>', 'creates a mongoose model of name <model> with fields <fields>')
+  .option('c, controller <controller> <methods>', 'creates a controller of name <controller> with methods <methods>')
+  .option('v, view <view> <views>', 'creates a view of name <name> with views <views>')
+  .option('-a, --auth <auth>', 'adds passport.js authentication (twitter|facebook|github|google)')
+
+program.on('--help', function() {
+  console.log('  Examples:')
+  console.log('')
+  console.log('    $ gen --help')
+  console.log('    $ gen init my_app')
+  console.log('    $ gen model user')
+  console.log('    $ gen model user name:string age:number location:object')
+  console.log('    $ gen controller users')
+  console.log('    $ gen controller users create index show')
+  console.log('    $ gen view users')
+  console.log('    $ gen view users new edit show')
+  console.log('    $ gen --auth')
+  console.log('    $ gen --auth twitter facebook')
+})
+
+program.parse(process.argv)
+
+
+// Generate application
+
+function createApplication(path) {
+  emptyDirectory(path, function(empty){
+    if (empty || program.force) {
+      createApplicationAt(path);
+    } else {
+      program.confirm('destination is not empty, continue? ', function(ok){
+        if (ok) {
+          process.stdin.destroy();
+          createApplicationAt(path);
+        } else {
+          abort('aborting');
+        }
+      });
+    }
+  });
+};
+
+if (program.init) createApplication(path)
+
 
 /**
- * Arguments
+ * Create application at the given directory `path`.
+ *
+ * @param {String} path
  */
 
-var args = process.argv.slice(2)
+function createApplicationAt(path) {
+  console.log();
+  process.on('exit', function(){
+    console.log();
+    console.log('   install dependencies:');
+    console.log('     $ cd %s && npm install', path);
+    console.log();
+    console.log('   run the app:');
+    console.log('     $ node app');
+    console.log();
+  });
 
+  mkdir(path, function(){
+    mkdir(path + '/public');
+    mkdir(path + '/public/js');
+    mkdir(path + '/public/img');
+    mkdir(path + '/public/css');
+
+    mkdir(path + '/app');
+    mkdir(path + '/app/models');
+    mkdir(path + '/app/views');
+    mkdir(path + '/app/controllers');
+
+    // layouts and includes folder
+    mkdir(path + '/app/views/layouts', function () {
+      write(path + '/app/views/layouts/default.jade', gen.jadeLayout);
+    });
+    mkdir(path + '/app/views/includes', function () {
+      write(path + '/app/views/includes/head.jade', '');
+      write(path + '/app/views/includes/header.jade', '');
+      write(path + '/app/views/includes/footer.jade', '');
+      write(path + '/app/views/includes/foot.jade', '');
+    });
+
+    mkdir(path + '/config');
+    mkdir(path + '/config', function () {
+      write(path + '/config/config.js', gen.config);
+      write(path + '/config/express.js', gen.express);
+      write(path + '/config/routes.js', gen.routes);
+    });
+
+    // package.json
+    var pkg = {
+        name: 'application name'
+      , version: '0.0.1'
+      , engines: {
+            node: '0.6.18'
+          , npm: '1.1.9'
+        }
+      , private: true
+      , scripts: { start: './node_modules/.bin/nodemon server.js' }
+      , dependencies: {
+            'express': 'latest'
+          , 'mongoose': 'latest'
+          , 'connect-mongodb': 'latest'
+          , 'async': 'latest'
+          , 'jade': 'latest'
+        }
+      , devDependencies: {
+            'nodemon': 'latest'
+          , 'mocha': 'latest'
+          , 'should': 'latest'
+        }
+    }
+
+    pkg.name = program.init
+
+    write(path + '/package.json', JSON.stringify(pkg, null, 2));
+    write(path + '/server.js', '');
+  });
+}
 
 /**
- * Usage
+ * Check if the given directory `path` is empty.
+ *
+ * @param {String} path
+ * @param {Function} fn
  */
 
-var usage = [
-    ''
-  , '  Usage: gen [command] [options]'
-  , ''
-  , '  Commands:'
-  , ''
-  , '  init APP_NAME              initializes an application'
-  , '  model NAME                 creates a mongoose model'
-  , '  controller NAME [METHODS]  creates a controller with methods METHODS'
-  , '  view NAME [PAGES]          creates a view with pages PAGES'
-  , ''
-].join('\n')
-
+function emptyDirectory(path, fn) {
+  fs.readdir(path, function(err, files){
+    if (err && 'ENOENT' != err.code) throw err;
+    fn(!files || !files.length);
+  });
+}
 
 /**
- * Parse arguments
+ * echo str > path.
+ *
+ * @param {String} path
+ * @param {String} str
  */
 
-if (args.length) {
+function write(path, str) {
+  fs.writeFile(path, str);
+  console.log('   \x1b[36mcreate\x1b[0m : ' + path);
+}
 
-  var gen = new Gen()
-    , arg = args.shift()
+/**
+ * Mkdir -p.
+ *
+ * @param {String} path
+ * @param {Function} fn
+ */
 
-  switch (arg) {
-    case 'init':
-      gen.init(args)
-      break;
-    case 'model':
-      gen.model(args)
-      break
-    case 'controller':
-      gen.controller(args)
-      break
-    case 'view':
-      gen.view(args)
-      break
-    case '-h':
-    case '--help':
-    case 'help':
-      console.log(usage)
-      process.exit()
-      break
-    default:
-      console.log(usage)
-      process.exit()
-      break
-  }
+function mkdir(path, fn) {
+  mkdirp(path, 0755, function(err){
+    if (err) throw err;
+    console.log('   \033[36mcreate\033[0m : ' + path);
+    fn && fn();
+  });
+}
+
+/**
+ * Exit with the given `str`.
+ *
+ * @param {String} str
+ */
+
+function abort(str) {
+  console.error(str);
+  process.exit(1);
 }
