@@ -4,13 +4,19 @@
  * Module dependencies.
  */
 
-var gen = require('../')
+var Gen = require('../')
   , fs = require('fs')
 
 /**
  * Arguments
  */
+
 var args = process.argv.slice(2)
+
+
+/**
+ * Usage
+ */
 
 var usage = [
     ''
@@ -18,37 +24,36 @@ var usage = [
   , ''
   , '  Commands:'
   , ''
-  , '  init [APP]                           initializes an application with name APP'
-  , '  model [MODEL]                        creates a mongoose model MODEL'
-  , '  controller [CONTROLLER] [METHODS]    creates a controller of name CONTROLLER'
-  , '  views [VIEW] [PAGES]                 creates a view VIEW with pages PAGES'
+  , '  init APP_NAME              initializes an application'
+  , '  model NAME                 creates a mongoose model'
+  , '  controller NAME [METHODS]  creates a controller with methods METHODS'
+  , '  view NAME [PAGES]          creates a view with pages PAGES'
   , ''
 ].join('\n')
 
-// abort with a message
-
-function abort(msg) {
-  console.error('  %s', msg);
-  process.exit(1);
-}
-
-/**
- * Commands
- */
-var commands = {}
-
-/**
- * Option defaults.
- */
-var options = { args: [] }
 
 /**
  * Parse arguments
  */
-var arg
-while (args.length) {
-  arg = args.shift()
+
+if (args.length) {
+
+  var gen = new Gen()
+    , arg = args.shift()
+
   switch (arg) {
+    case 'init':
+      gen.init(args)
+      break;
+    case 'model':
+      gen.model(args)
+      break
+    case 'controller':
+      gen.controller(args)
+      break
+    case 'view':
+      gen.view(args)
+      break
     case '-h':
     case '--help':
     case 'help':
@@ -56,15 +61,8 @@ while (args.length) {
       process.exit()
       break
     default:
-      if (options.command) {
-        options.args.push(arg)
-      } else {
-        options.command = arg
-      }
+      console.log(usage)
+      process.exit()
+      break
   }
 }
-
-var command = options.command || 'up'
-if (!(command in commands)) abort('unknown command "' + command + '"')
-command = commands[command]
-command.apply(this, options.args)
