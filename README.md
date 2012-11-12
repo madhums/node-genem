@@ -4,13 +4,13 @@ A MVC generator for node.js (uses express, mongoose, jade and passport.js). Base
 ## Installation
 
 ```sh
-$ npm install gen -g
+$ npm install genem -g
 ```
 
 ## Usage
 
 ```sh
-$ gen --help
+$ genem --help
 ```
 
 ## Directory structure
