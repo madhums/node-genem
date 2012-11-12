@@ -1,4 +1,4 @@
-## node-gen
+## node-genem
 A MVC generator for node.js (uses express, mongoose, jade and passport.js). Based on [nodejs-express-demo](http://github.com/madhums/nodejs-express-mongoose-demo)
 
 ## Installation
