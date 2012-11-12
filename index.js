@@ -1,1 +1,1 @@
-module.exports = require('./lib/gen');
+module.exports = require('./lib/genem');

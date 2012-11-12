@@ -1,11 +1,11 @@
 {
-    "name": "gen"
+    "name": "genem"
   , "version": "0.0.1"
-  , "description": "MVC generator for node"
-  , "keywords": ["generator", "mvc", "express", "mongoose", "jade"]
+  , "description": "MVC generator for node using express and mongoose"
+  , "keywords": ["generator", "mvc", "express", "mongoose", "jade", "passport"]
   , "author": "Madhusudhan Srinivasa <madhums8@gmail.com>"
-  , "repository": "git://github.com/madhums/node-gen"
-  , "bin": { "gen": "./bin/gen" }
+  , "repository": "git://github.com/madhums/node-genem"
+  , "bin": { "genem": "./bin/genem" }
   , "dependencies": {
         "commander": "latest"
       , "mkdirp": "latest"
