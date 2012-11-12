@@ -22,38 +22,60 @@ var gen = require('../')
 
 
 program
-  .version(version)
-  .option('i, init <app>', 'initialize app with name <app>')
-  .option('m, model <model> <fields>', 'creates a mongoose model of name <model> with fields <fields>')
-  .option('c, controller <controller> <methods>', 'creates a controller of name <controller> with methods <methods>')
-  .option('v, view <view> <views>', 'creates a view of name <name> with views <views>')
-  .option('-a, --auth <auth>', 'adds passport.js authentication (twitter|facebook|github|google)')
+  .command('init <app>')
+  .description('initialize app with name <app>')
+  .action(function(app){
+    createApplication(path, app);
+  });
+
+program
+  .command('model <model>')
+  .description('creates a mongoose model of name <model>')
+  .action(function(model){
+    createModel(path, model);
+  });
+
+program
+  .command('controller <controller>')
+  .description('creates a controller of name <controller>')
+  .action(function(controller){
+    createController(path, controller);
+  });
+
+program
+  .command('view <view>')
+  .description('creates a view of name <view>')
+  .action(function(view){
+    createView(path, view);
+  });
+
+program
   .option('-f, --force', 'force on non-empty directory')
+  .option('-F, --fields <fields>', 'create fields for the model <model>')
+  .option('-M, --methods <methods>', 'create methods for the controller <controller>')
+  .option('-V, --views <views>', 'create views for the view <view>')
+  .option('-A, --auth <auth>', 'adds passport.js authentication (twitter|facebook|github|google)')
+  .version(version)
+
 
 program.on('--help', function() {
   console.log('  Examples:')
   console.log('')
   console.log('    $ gen --help')
   console.log('    $ gen init my_app')
+  console.log('    $ gen init my_app --auth twitter facebook')
   console.log('    $ gen model user')
-  console.log('    $ gen model user name:string age:number location:object')
+  console.log('    $ gen model user --fields name:string age:number location:object')
   console.log('    $ gen controller users')
-  console.log('    $ gen controller users create index show')
+  console.log('    $ gen controller users --methods create index show')
   console.log('    $ gen view users')
-  console.log('    $ gen view users new edit show')
-  console.log('    $ gen --auth')
-  console.log('    $ gen --auth twitter facebook')
+  console.log('    $ gen view users --views new edit show')
   console.log('')
   console.log('if you are facing any issues - https://github.com/madhums/node-gen/issues')
+  console.log('')
 })
 
 program.parse(process.argv)
-
-
-if (program.init) createApplication(path)
-else if (program.model) createModel(path)
-else if (program.view) createView(path)
-else if (program.controller) createController(path)
 
 
 /**
@@ -62,12 +84,17 @@ else if (program.controller) createController(path)
  * @param {String} path
  */
 
-function createModel (path) {
-  var file = path + '/app/models/' + program.model + '.js';
+function createModel (path, modelName) {
+  var file = path + '/app/models/' + modelName + '.js';
 
   var model = function () {
     mkdir(path + '/app/models/', function () {
       write(file, gen.model);
+
+      if (program.fields) {
+        // insert fields into the model file
+      }
+
     });
   }
 
@@ -92,8 +119,31 @@ function createModel (path) {
  * @param {String} path
  */
 
-function createView (path) {
+function createView (path, viewName) {
+  var viewPath = path + '/app/views/' + viewName;
 
+  var view = function () {
+    mkdir(viewPath, function () {
+
+      if (program.views) {
+        // create views <views>
+      }
+
+    });
+  }
+
+  if (!fs.existsSync(viewPath) || program.force) {
+    view()
+  } else {
+    program.confirm('destination is not empty, continue? ', function(ok){
+      if (ok) {
+        process.stdin.destroy();
+        view()
+      } else {
+        abort('aborting');
+      }
+    });
+  }
 }
 
 
@@ -103,12 +153,17 @@ function createView (path) {
  * @param {String} path
  */
 
-function createController (path) {
-  var file = path + '/app/controllers/' + program.controller + '.js';
+function createController (path, controllerName) {
+  var file = path + '/app/controllers/' + controllerName + '.js';
 
   var controller = function () {
     mkdir(path + '/app/controllers/', function () {
       write(file, gen.controller);
+
+      if (program.methods) {
+        // create methods in the controller
+      }
+
     });
   }
 
@@ -133,7 +188,7 @@ function createController (path) {
  * @param {String} path
  */
 
-function createApplication(path) {
+function createApplication(path, app) {
   emptyDirectory(path, function(empty){
     if (empty || program.force) {
       createApplicationAt(path);
@@ -141,7 +196,7 @@ function createApplication(path) {
       program.confirm('destination is not empty, continue? ', function(ok){
         if (ok) {
           process.stdin.destroy();
-          createApplicationAt(path);
+          createApplicationAt(path, app);
         } else {
           abort('aborting');
         }
@@ -156,7 +211,7 @@ function createApplication(path) {
  * @param {String} path
  */
 
-function createApplicationAt(path) {
+function createApplicationAt(path, app) {
   console.log();
   process.on('exit', function(){
     console.log();
@@ -170,7 +225,7 @@ function createApplicationAt(path) {
 
   mkdir(path, function(){
     // readme
-    write(path + '/README.md', '## ' + program.init + eol);
+    write(path + '/README.md', '## ' + app + eol);
 
     // public dir - js, css and img
     mkdir(path + '/public');
@@ -205,7 +260,7 @@ function createApplicationAt(path) {
 
     // package.json
     var pkg = gen.pkg
-    pkg.name = program.init
+    pkg.name = app
     write(path + '/package.json', JSON.stringify(pkg, null, 2));
 
     // server (bootstrap)
