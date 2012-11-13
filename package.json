@@ -1,6 +1,6 @@
 {
     "name": "genem"
-  , "version": "0.0.1"
+  , "version": "0.0.0"
   , "description": "MVC generator for node using express and mongoose"
   , "keywords": ["generator", "mvc", "express", "mongoose", "jade", "passport"]
   , "author": "Madhusudhan Srinivasa <madhums8@gmail.com>"
