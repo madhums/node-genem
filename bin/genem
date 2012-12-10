@@ -191,7 +191,7 @@ function createController (path, controllerName) {
 function createApplication(path, app) {
   emptyDirectory(path, function(empty){
     if (empty || program.force) {
-      createApplicationAt(path);
+      createApplicationAt(path, app);
     } else {
       program.confirm('destination is not empty, continue? ', function(ok){
         if (ok) {
@@ -239,6 +239,11 @@ function createApplicationAt(path, app) {
     mkdir(path + '/app/views');
     mkdir(path + '/app/controllers');
 
+    // helpers
+    mkdir(path + '/app/helpers', function () {
+      write(path + '/app/helpers/view', genem.viewHelper)
+    });
+
     // layouts and includes folder
     mkdir(path + '/app/views/layouts', function () {
       write(path + '/app/views/layouts/default.jade', genem.jadeLayout);
@@ -255,16 +260,71 @@ function createApplicationAt(path, app) {
     mkdir(path + '/config', function () {
       write(path + '/config/config.js', genem.config);
       write(path + '/config/express.js', genem.express);
+      write(path + '/config/middlewares.js', genem.middlewares);
       write(path + '/config/routes.js', genem.routes);
     });
 
     // package.json
-    var pkg = genem.pkg
+    var pkg = genem.pkg(program.auth)
     pkg.name = app
+
     write(path + '/package.json', JSON.stringify(pkg, null, 2));
 
     // server (bootstrap)
-    write(path + '/server.js', genem.server);
+    var server = [
+      , ''
+      , '/**'
+      , '* Module dependencies'
+      , '*/'
+      , ''
+      , 'var express = require(\'express\')'];
+
+    if (program.auth) {
+      server = server.concat([
+        , '  , passport = require(\'passport\')']);
+    }
+
+    server = server.concat([
+        '  , env = process.env.NODE_ENV || \'development\''
+      , '  , config = require(\'./config/config\')[env]'
+      , '  , mongoose = require(\'mongoose\')'
+      , '  , modelsPath = __dirname + \'/app/models\''
+      , ''
+      , 'mongoose.connect(config.db)'
+      , ''
+      , '// Bootstrap models'
+      , 'require(\'fs\').readdirSync(modelsPath).forEach(function (file) {'
+      , '  require(modelsPath+\'/\'+file)'
+      , '})']);
+
+      if (program.auth) {
+        write(path + '/config/passport.js', genem.passport(program.auth.toLowerCase()));
+
+        server = server.concat([
+          ''
+        , '// Bootstrap passport config'
+        , 'require(\'./config/passport\')(passport, config)']);
+      }
+
+      server = server.concat([
+        ''
+      , 'var app = express()'
+      , ''
+      , '// Bootstrap application settings'
+      , 'require(\'./config/express\')(app, config, passport)'
+      , ''
+      , '// Bootstrap routes'
+      , 'require(\'./config/routes\')(app, passport)'
+      , ''
+      , '// Start the app by listening on <port>'
+      , 'var port = process.env.PORT || 3000'
+      , 'app.listen(port)'
+      , 'console.log(\'Express app started on port \'+port)'
+      , '']);
+
+      server = server.join(eol);
+
+    write(path + '/server.js', server);
 
     // test dir
     mkdir(path + '/test', function () {
