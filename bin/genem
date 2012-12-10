@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /*!
- * gen
+ * genem
  * Copyright(c) 2012 Madhusudhan Srinivasa <madhums8@gmail.com>
  * MIT Licensed
  */
@@ -61,17 +61,17 @@ program
 program.on('--help', function() {
   console.log('  Examples:')
   console.log('')
-  console.log('    $ gen --help')
-  console.log('    $ gen init my_app')
-  console.log('    $ gen init my_app --auth twitter facebook')
-  console.log('    $ gen model user')
-  console.log('    $ gen model user --fields name:string age:number location:object')
-  console.log('    $ gen controller users')
-  console.log('    $ gen controller users --methods create index show')
-  console.log('    $ gen view users')
-  console.log('    $ gen view users --views new edit show')
+  console.log('    $ genem --help')
+  console.log('    $ genem init my_app')
+  console.log('    $ genem init my_app --auth twitter facebook')
+  console.log('    $ genem model user')
+  console.log('    $ genem model user --fields name:string age:number location:object')
+  console.log('    $ genem controller users')
+  console.log('    $ genem controller users --methods create index show')
+  console.log('    $ genem view users')
+  console.log('    $ genem view users --views new edit show')
   console.log('')
-  console.log('if you are facing any issues - https://github.com/madhums/node-gen/issues')
+  console.log('if you are facing any issues - https://github.com/madhums/node-genem/issues')
   console.log('')
 })
 
@@ -231,7 +231,20 @@ function createApplicationAt(path, app) {
     mkdir(path + '/public');
     mkdir(path + '/public/js');
     mkdir(path + '/public/img');
-    mkdir(path + '/public/css');
+    mkdir(path + '/public/css', function () {
+      var css = [
+          'body {'
+        , '  padding: 50px;'
+        , '  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;'
+        , '}'
+        , ''
+        , 'a {'
+        , '  color: #00B7FF;'
+        , '}'
+      ].join(eol);
+
+      write(path + '/public/css/app.css', css);
+    });
 
     // app dir - mvc
     mkdir(path + '/app');
@@ -277,11 +290,15 @@ function createApplicationAt(path, app) {
       , '* Module dependencies'
       , '*/'
       , ''
-      , 'var express = require(\'express\')'];
+      , 'var express = require(\'express\')'
+    ];
 
     if (program.auth) {
       server = server.concat([
         , '  , passport = require(\'passport\')']);
+    } else {
+      server = server.concat([
+        , '  , passport = undefined']);
     }
 
     server = server.concat([
@@ -295,18 +312,19 @@ function createApplicationAt(path, app) {
       , '// Bootstrap models'
       , 'require(\'fs\').readdirSync(modelsPath).forEach(function (file) {'
       , '  require(modelsPath+\'/\'+file)'
-      , '})']);
+      , '})'
+    ]);
 
-      if (program.auth) {
-        write(path + '/config/passport.js', genem.passport(program.auth.toLowerCase()));
-
-        server = server.concat([
-          ''
-        , '// Bootstrap passport config'
-        , 'require(\'./config/passport\')(passport, config)']);
-      }
+    if (program.auth) {
+      write(path + '/config/passport.js', genem.passport(program.auth.toLowerCase()));
 
       server = server.concat([
+        ''
+      , '// Bootstrap passport config'
+      , 'require(\'./config/passport\')(passport, config)']);
+    }
+
+    server = server.concat([
         ''
       , 'var app = express()'
       , ''
@@ -320,11 +338,60 @@ function createApplicationAt(path, app) {
       , 'var port = process.env.PORT || 3000'
       , 'app.listen(port)'
       , 'console.log(\'Express app started on port \'+port)'
-      , '']);
+      , ''
+    ]);
 
-      server = server.join(eol);
+    server = server.join(eol);
 
     write(path + '/server.js', server);
+
+    // home controller
+    var home = [
+        ''
+      , '/**'
+      , ' * Home page'
+      , ' *'
+      , ' * GET /'
+      , ' */'
+      , ''
+      , 'exports.index = function (req, res) {'
+      , '  res.render(\'home\', {title: \''+app+'\'})'
+      , '}'
+      , ''
+    ].join(eol);
+
+    write(path + '/app/controllers/home.js', home);
+
+    // jade files
+    var jade500 = [
+        'extends ./layouts/default'
+      , ''
+      , 'block content'
+      , '  h1 500'
+      , '  p Internal error occured'
+    ].join(eol);
+
+    var jade404 = [
+        'extends ./layouts/default'
+      , ''
+      , 'block content'
+      , '  h1 404'
+      , '  p Not found'
+    ].join(eol);
+
+    write(path + '/app/views/500.jade', jade500);
+    write(path + '/app/views/404.jade', jade404);
+    mkdir(path + '/app/views/home', function () {
+      var homeIndex = [
+          'extends ../layouts/default'
+        , ''
+        , 'block content'
+        , '  h1= title'
+        , '  p Welcome to #{title}'
+      ].join(eol);
+
+      write(path + '/app/views/home/index.jade', homeIndex);
+    });
 
     // test dir
     mkdir(path + '/test', function () {
