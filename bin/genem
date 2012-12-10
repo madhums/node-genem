@@ -63,7 +63,7 @@ program.on('--help', function() {
   console.log('')
   console.log('    $ genem --help')
   console.log('    $ genem init my_app')
-  console.log('    $ genem init my_app --auth twitter facebook')
+  console.log('    $ genem init my_app --auth twitter')
   console.log('    $ genem model user')
   console.log('    $ genem model user --fields name:string age:number location:object')
   console.log('    $ genem controller users')
