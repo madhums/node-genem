@@ -65,7 +65,7 @@ program.on('--help', function() {
   console.log('    $ genem init my_app')
   console.log('    $ genem init my_app --auth twitter')
   console.log('    $ genem model user')
-  console.log('    $ genem model user --fields name:string age:number location:object')
+  console.log('    $ genem model article --fields name:string,description:string,location:object')
   console.log('    $ genem controller users')
   console.log('    $ genem controller users --methods create index show')
   console.log('    $ genem view users')
@@ -77,6 +77,9 @@ program.on('--help', function() {
 
 program.parse(process.argv)
 
+function capitalize (string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
 
 /**
  * Generate model
@@ -89,11 +92,41 @@ function createModel (path, modelName) {
 
   var model = function () {
     mkdir(path + '/app/models/', function () {
-      write(file, genem.model);
+      var modelTemplate = [];
 
       if (program.fields) {
+
+        var fields = program.fields.split(',')
+          , fieldsString = [];
+
+        fields.forEach(function (field, i) {
+          var name = field.split(':')[0];
+          var type = field.split(':')[1];
+          var str = i === 0 ? '    ': '  , ';
+
+          fieldsString = fieldsString.concat([
+              str + name + ': ' + type
+          ]);
+        });
+
+        fieldsString = fieldsString.join(eol);
+
         // insert fields into the model file
+        modelTemplate = [
+            ''
+          , 'var mongoose = require(\'mongoose\')'
+          , '  , Schema = mongoose.Schema'
+          , ''
+          , 'var '+ capitalize(modelName) +'Schema = new Schema({'
+          , fieldsString
+          , '})'
+          , ''
+          , 'mongoose.model(\''+ capitalize(modelName) +'\', '+  capitalize(modelName) +'Schema)'
+          , ''
+        ].join(eol);
       }
+
+      write(file, modelTemplate);
 
     });
   }
@@ -294,6 +327,62 @@ function createApplicationAt(path, app) {
     ];
 
     if (program.auth) {
+      // create user model
+      var userModel = [
+          ''
+        , '/**'
+        , '* Module dependencies'
+        , '*/'
+        , ''
+        , 'var mongoose = require(\'mongoose\')'
+        , '  , Schema = mongoose.Schema'
+        , ''
+        , 'var UserSchema = new Schema({'
+        , '    name: String'
+        , '  , email: String'
+        , '  , username: String'
+        , '  , provider: String'
+        , '  , hashed_password: String'
+        , '  , salt: String'
+        , '})'
+        , ''
+        , 'mongoose.model(\'User\', UserSchema)'
+        , ''
+      ].join(eol);
+
+      write(path + '/app/models/user.js', userModel);
+
+      // create user controller
+      var usersController = [
+          ''
+        , '/**'
+        , '* Module dependencies'
+        , '*/'
+        , ''
+        , 'var mongoose = require(\'mongoose\')'
+        , '  , User = mongoose.model(\'User\')'
+        , ''
+        , 'exports.login = function (req, res) {'
+        , '  res.render(\'users/login\')'
+        , '}'
+        , ''
+      ].join(eol);
+
+      write(path + '/app/controllers/users.js', usersController);
+
+      // create user views
+      mkdir(path + '/app/views/users', function () {
+        var loginTemplate = [
+            'extends ../layouts/default'
+          , ''
+          , 'block content'
+          , '  h1 Login'
+          , ''
+        ].join(eol);
+
+        write(path + '/app/views/users/login.jade', loginTemplate);
+      });
+
       server = server.concat([
         , '  , passport = require(\'passport\')']);
     } else {
