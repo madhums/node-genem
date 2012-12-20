@@ -344,7 +344,7 @@ function createApplicationAt(path, app) {
         , '  , provider: String'
         , '  , hashed_password: String'
         , '  , salt: String'
-        , '})'
+        , '}, { safe: true })'
         , ''
         , 'mongoose.model(\'User\', UserSchema)'
         , ''
