@@ -306,8 +306,10 @@ function createApplicationAt(path, app) {
     mkdir(path + '/config', function () {
       write(path + '/config/config.js', genem.config(app, program.auth));
       write(path + '/config/express.js', genem.express);
-      write(path + '/config/middlewares.js', genem.middlewares);
       write(path + '/config/routes.js', genem.routes);
+      if (program.auth) {
+        write(path + '/config/middlewares.js', genem.middlewares);
+      }
     });
 
     // package.json
