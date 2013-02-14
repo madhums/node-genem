@@ -287,7 +287,7 @@ function createApplicationAt(path, app) {
 
     // helpers
     mkdir(path + '/app/helpers', function () {
-      write(path + '/app/helpers/view', genem.viewHelper)
+      write(path + '/app/helpers/view.js', genem.viewHelper)
     });
 
     // layouts and includes folder
@@ -304,7 +304,7 @@ function createApplicationAt(path, app) {
     // config dir - config, express and routes
     mkdir(path + '/config');
     mkdir(path + '/config', function () {
-      write(path + '/config/config.js', genem.config);
+      write(path + '/config/config.js', genem.config(app, program.auth));
       write(path + '/config/express.js', genem.express);
       write(path + '/config/middlewares.js', genem.middlewares);
       write(path + '/config/routes.js', genem.routes);
