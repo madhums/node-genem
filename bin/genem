@@ -16,7 +16,7 @@ var genem = require('../')
   , mkdirp = require('mkdirp')
   , program = require('commander')
   , fs = require('fs')
-  , path = program.args.shift() || '.'
+  , path = program._args.shift() || '.'
   , os = require('os')
   , eol = 'win32' == os.platform() ? '\r\n' : '\n'
 
@@ -77,64 +77,30 @@ program.on('--help', function() {
 
 program.parse(process.argv)
 
-function capitalize (string) {
-  return string.charAt(0).toUpperCase() + string.slice(1);
-}
-
 /**
  * Generate model
  *
  * @param {String} path
+ * @param {String} name - model name
  */
 
-function createModel (path, modelName) {
-  var file = path + '/app/models/' + modelName + '.js';
-
-  var model = function () {
-    mkdir(path + '/app/models/', function () {
-      var modelTemplate = [];
-
-      if (program.fields) {
-
-        var fields = program.fields.split(',')
-          , fieldsString = [];
-
-        fields.forEach(function (field, i) {
-          var name = field.split(':')[0];
-          var type = field.split(':')[1];
-          var str = i === 0 ? '    ': '  , ';
-
-          fieldsString = fieldsString.concat([
-              str + name + ': ' + type
-          ]);
-        });
-
-        fieldsString = fieldsString.join(eol);
-
-        // insert fields into the model file
-        modelTemplate = [
-          '',
-          'var mongoose = require(\'mongoose\')',
-          '  , Schema = mongoose.Schema',
-          '',
-          'var '+ capitalize(modelName) +'Schema = new Schema({',
-          fieldsString,
-          '})',
-          '',
-          'mongoose.model(\''+ capitalize(modelName) +'\', '+  capitalize(modelName) +'Schema)',
-          ''
-        ].join(eol);
-      }
-
-      write(file, modelTemplate);
-
-    });
-  }
+function createModel (path, name) {
+  var file = path + '/app/models/' + name + '.js';
 
   if (!fs.existsSync(file) || program.force) {
-    model()
+    mkdir(path + '/app/models/', function () {
+      var fields = program.fields.split(',')
+
+      fields = fields.map(function (field, i) {
+        var name = field.split(':')[0];
+        var type = field.split(':')[1];
+        return { name: name, type: type }
+      });
+
+      write(file, genem.model(name, fields));
+    });
   } else {
-    program.confirm('destination is not empty, continue? ', function(ok){
+    program.confirm('destination is not empty, continue? ', function (ok) {
       if (ok) {
         process.stdin.destroy();
         model()
@@ -256,6 +222,8 @@ function createApplicationAt(path, app) {
   });
 
   mkdir(path, function(){
+    var auth = program.auth;
+
     // readme
     write(path + '/README.md', '## ' + app + eol);
 
@@ -265,7 +233,6 @@ function createApplicationAt(path, app) {
     mkdir(path + '/public/img');
     mkdir(path + '/public/css', function () {
       var css = genem.css()
-
       write(path + '/public/css/app.css', css);
     });
 
@@ -294,73 +261,66 @@ function createApplicationAt(path, app) {
     // config dir - config, express and routes
     mkdir(path + '/config');
     mkdir(path + '/config', function () {
-      write(path + '/config/config.js', genem.config(app, program.auth));
+      write(path + '/config/config.js', genem.config(app, auth));
       write(path + '/config/express.js', genem.express);
-      write(path + '/config/routes.js', genem.routes(program.auth));
-      if (program.auth) {
+      write(path + '/config/routes.js', genem.routes(auth));
+      if (auth) {
         write(path + '/config/middlewares.js', genem.middlewares);
       }
     });
 
     // package.json
-    var pkg = genem.pkg(program.auth)
-    pkg.name = app
-
+    var pkg = genem.pkg(auth);
+    pkg.name = app;
     write(path + '/package.json', JSON.stringify(pkg, null, 2));
 
-    // server (bootstrap)
-    var server = genem.server(program.auth)
+    // if auth option is provided create user MVC
+    if (auth) {
+      var fields = [
+        { name: 'name', type: 'string' },
+        { name: 'email', type: 'string' },
+        { name: 'username', type: 'string' },
+        { name: 'provider', type: 'string' },
+        { name: 'hashed_password', type: 'string' },
+        { name: 'salt', type: 'string' }
+      ];
 
+      // user MVC
+      var user = {
+        model: genem.model('user', fields),
+        controller: genem.controller('user', 'login'),
+        login: genem.template('login')
+      };
+      write(path + '/app/models/user.js', user.model);
+      write(path + '/app/controllers/users.js', user.controller);
+      mkdir(path + '/app/views/users', function () {
+        write(path + '/app/views/users/login.jade', user.login);
+      });
+
+      // passport
+      write(path + '/config/passport.js', genem.passport(auth.toLowerCase()));
+    }
+
+    // server (bootstrap)
+    var server = genem.server(auth, path);
     write(path + '/server.js', server);
 
-    // home controller
-    var home = [
-      '',
-      '/**',
-      ' * Home page',
-      ' */',
-      '',
-      'exports.index = function (req, res) {',
-      '  res.render(\'home\', {title: \''+app+'\'})',
-      '}',
-      ''
-    ].join(eol);
+    // home MVC
+    var home = {
+      controller: genem.controller('home', 'index', false),
+      index: genem.template(app, 'Welcome!')
+    };
+    write(path + '/app/controllers/home.js', home.controller);
+    mkdir(path + '/app/views/home', function () {
+      write(path + '/app/views/home/index.jade', home.index);
+    });
 
-    write(path + '/app/controllers/home.js', home);
-
-    // jade files
-    var jade500 = [
-      'extends ./layouts/default',
-      '',
-      'block content',
-      '  h1 500',
-      '  p Internal error occured',
-      ''
-    ].join(eol);
-
-    var jade404 = [
-      'extends ./layouts/default',
-      '',
-      'block content',
-      '  h1 404',
-      '  p Not found',
-      ''
-    ].join(eol);
-
+    // 500 and 404
+    var jade500 = genem.template('500', 'Internal error occured!');
+    var jade404 = genem.template('404', 'Not found!');
     write(path + '/app/views/500.jade', jade500);
     write(path + '/app/views/404.jade', jade404);
-    mkdir(path + '/app/views/home', function () {
-      var homeIndex = [
-        'extends ../layouts/default',
-        '',
-        'block content',
-        '  h1= title',
-        '  p Welcome to #{title}',
-        ''
-      ].join(eol);
 
-      write(path + '/app/views/home/index.jade', homeIndex);
-    }),
     // test dir
     mkdir(path + '/test', function () {
       write(path + '/test/test.js', '');
