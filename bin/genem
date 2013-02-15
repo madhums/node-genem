@@ -302,7 +302,7 @@ function createApplicationAt(path, app) {
     }
 
     // server (bootstrap)
-    var server = genem.server(auth, path);
+    var server = genem.server(auth);
     write(path + '/server.js', server);
 
     // home MVC
