@@ -9,6 +9,7 @@
   , "dependencies": {
         "commander": "latest"
       , "mkdirp": "latest"
+      , "inflection": "latest"
     }
   , "devDependencies": {
       "should": ">= 0.0.1"
