@@ -113,16 +113,16 @@ function createModel (path, modelName) {
 
         // insert fields into the model file
         modelTemplate = [
-            ''
-          , 'var mongoose = require(\'mongoose\')'
-          , '  , Schema = mongoose.Schema'
-          , ''
-          , 'var '+ capitalize(modelName) +'Schema = new Schema({'
-          , fieldsString
-          , '})'
-          , ''
-          , 'mongoose.model(\''+ capitalize(modelName) +'\', '+  capitalize(modelName) +'Schema)'
-          , ''
+          '',
+          'var mongoose = require(\'mongoose\')',
+          '  , Schema = mongoose.Schema',
+          '',
+          'var '+ capitalize(modelName) +'Schema = new Schema({',
+          fieldsString,
+          '})',
+          '',
+          'mongoose.model(\''+ capitalize(modelName) +'\', '+  capitalize(modelName) +'Schema)',
+          ''
         ].join(eol);
       }
 
@@ -196,7 +196,6 @@ function createController (path, controllerName) {
       if (program.methods) {
         // create methods in the controller
       }
-
     });
   }
 
@@ -265,16 +264,7 @@ function createApplicationAt(path, app) {
     mkdir(path + '/public/js');
     mkdir(path + '/public/img');
     mkdir(path + '/public/css', function () {
-      var css = [
-          'body {'
-        , '  padding: 50px;'
-        , '  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;'
-        , '}'
-        , ''
-        , 'a {'
-        , '  color: #00B7FF;'
-        , '}'
-      ].join(eol);
+      var css = genem.css()
 
       write(path + '/public/css/app.css', css);
     });
@@ -306,7 +296,7 @@ function createApplicationAt(path, app) {
     mkdir(path + '/config', function () {
       write(path + '/config/config.js', genem.config(app, program.auth));
       write(path + '/config/express.js', genem.express);
-      write(path + '/config/routes.js', genem.routes);
+      write(path + '/config/routes.js', genem.routes(program.auth));
       if (program.auth) {
         write(path + '/config/middlewares.js', genem.middlewares);
       }
@@ -319,171 +309,58 @@ function createApplicationAt(path, app) {
     write(path + '/package.json', JSON.stringify(pkg, null, 2));
 
     // server (bootstrap)
-    var server = [
-      , ''
-      , '/**'
-      , '* Module dependencies'
-      , '*/'
-      , ''
-      , 'var express = require(\'express\')'
-    ];
-
-    if (program.auth) {
-      // create user model
-      var userModel = [
-          ''
-        , '/**'
-        , '* Module dependencies'
-        , '*/'
-        , ''
-        , 'var mongoose = require(\'mongoose\')'
-        , '  , Schema = mongoose.Schema'
-        , ''
-        , 'var UserSchema = new Schema({'
-        , '    name: String'
-        , '  , email: String'
-        , '  , username: String'
-        , '  , provider: String'
-        , '  , hashed_password: String'
-        , '  , salt: String'
-        , '}, { safe: true })'
-        , ''
-        , 'mongoose.model(\'User\', UserSchema)'
-        , ''
-      ].join(eol);
-
-      write(path + '/app/models/user.js', userModel);
-
-      // create user controller
-      var usersController = [
-          ''
-        , '/**'
-        , '* Module dependencies'
-        , '*/'
-        , ''
-        , 'var mongoose = require(\'mongoose\')'
-        , '  , User = mongoose.model(\'User\')'
-        , ''
-        , 'exports.login = function (req, res) {'
-        , '  res.render(\'users/login\')'
-        , '}'
-        , ''
-      ].join(eol);
-
-      write(path + '/app/controllers/users.js', usersController);
-
-      // create user views
-      mkdir(path + '/app/views/users', function () {
-        var loginTemplate = [
-            'extends ../layouts/default'
-          , ''
-          , 'block content'
-          , '  h1 Login'
-          , ''
-        ].join(eol);
-
-        write(path + '/app/views/users/login.jade', loginTemplate);
-      });
-
-      server = server.concat([
-        , '  , passport = require(\'passport\')']);
-    } else {
-      server = server.concat([
-        , '  , passport = undefined']);
-    }
-
-    server = server.concat([
-        '  , env = process.env.NODE_ENV || \'development\''
-      , '  , config = require(\'./config/config\')[env]'
-      , '  , mongoose = require(\'mongoose\')'
-      , '  , modelsPath = __dirname + \'/app/models\''
-      , ''
-      , 'mongoose.connect(config.db)'
-      , ''
-      , '// Bootstrap models'
-      , 'require(\'fs\').readdirSync(modelsPath).forEach(function (file) {'
-      , '  require(modelsPath+\'/\'+file)'
-      , '})'
-    ]);
-
-    if (program.auth) {
-      write(path + '/config/passport.js', genem.passport(program.auth.toLowerCase()));
-
-      server = server.concat([
-        ''
-      , '// Bootstrap passport config'
-      , 'require(\'./config/passport\')(passport, config)']);
-    }
-
-    server = server.concat([
-        ''
-      , 'var app = express()'
-      , ''
-      , '// Bootstrap application settings'
-      , 'require(\'./config/express\')(app, config, passport)'
-      , ''
-      , '// Bootstrap routes'
-      , 'require(\'./config/routes\')(app, passport)'
-      , ''
-      , '// Start the app by listening on <port>'
-      , 'var port = process.env.PORT || 3000'
-      , 'app.listen(port)'
-      , 'console.log(\'Express app started on port \'+port)'
-      , ''
-    ]);
-
-    server = server.join(eol);
+    var server = genem.server(program.auth)
 
     write(path + '/server.js', server);
 
     // home controller
     var home = [
-        ''
-      , '/**'
-      , ' * Home page'
-      , ' *'
-      , ' * GET /'
-      , ' */'
-      , ''
-      , 'exports.index = function (req, res) {'
-      , '  res.render(\'home\', {title: \''+app+'\'})'
-      , '}'
-      , ''
+      '',
+      '/**',
+      ' * Home page',
+      ' */',
+      '',
+      'exports.index = function (req, res) {',
+      '  res.render(\'home\', {title: \''+app+'\'})',
+      '}',
+      ''
     ].join(eol);
 
     write(path + '/app/controllers/home.js', home);
 
     // jade files
     var jade500 = [
-        'extends ./layouts/default'
-      , ''
-      , 'block content'
-      , '  h1 500'
-      , '  p Internal error occured'
+      'extends ./layouts/default',
+      '',
+      'block content',
+      '  h1 500',
+      '  p Internal error occured',
+      ''
     ].join(eol);
 
     var jade404 = [
-        'extends ./layouts/default'
-      , ''
-      , 'block content'
-      , '  h1 404'
-      , '  p Not found'
+      'extends ./layouts/default',
+      '',
+      'block content',
+      '  h1 404',
+      '  p Not found',
+      ''
     ].join(eol);
 
     write(path + '/app/views/500.jade', jade500);
     write(path + '/app/views/404.jade', jade404);
     mkdir(path + '/app/views/home', function () {
       var homeIndex = [
-          'extends ../layouts/default'
-        , ''
-        , 'block content'
-        , '  h1= title'
-        , '  p Welcome to #{title}'
+        'extends ../layouts/default',
+        '',
+        'block content',
+        '  h1= title',
+        '  p Welcome to #{title}',
+        ''
       ].join(eol);
 
       write(path + '/app/views/home/index.jade', homeIndex);
-    });
-
+    }),
     // test dir
     mkdir(path + '/test', function () {
       write(path + '/test/test.js', '');
