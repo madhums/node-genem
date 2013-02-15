@@ -65,7 +65,7 @@ program.on('--help', function() {
   console.log('    $ genem init my_app')
   console.log('    $ genem init my_app --auth twitter')
   console.log('    $ genem model user')
-  console.log('    $ genem model article --fields name:string,description:string,location:object')
+  console.log('    $ genem model article --fields name:string,description:string,location:boolean')
   console.log('    $ genem controller users')
   console.log('    $ genem controller users --methods create index show')
   console.log('    $ genem view users')
@@ -87,9 +87,11 @@ program.parse(process.argv)
 function createModel (path, name) {
   var file = path + '/app/models/' + name + '.js';
 
-  if (!fs.existsSync(file) || program.force) {
+  function model () {
     mkdir(path + '/app/models/', function () {
-      var fields = program.fields.split(',')
+      var fields = program.fields
+        ? program.fields.split(',')
+        : []
 
       fields = fields.map(function (field, i) {
         var name = field.split(':')[0];
@@ -99,6 +101,10 @@ function createModel (path, name) {
 
       write(file, genem.model(name, fields));
     });
+  }
+
+  if (!fs.existsSync(file) || program.force) {
+    model()
   } else {
     program.confirm('destination is not empty, continue? ', function (ok) {
       if (ok) {
