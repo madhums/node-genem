@@ -249,7 +249,7 @@ function createApplicationAt(path, app) {
 
     // layouts and includes folder
     mkdir(path + '/app/views/layouts', function () {
-      write(path + '/app/views/layouts/default.jade', genem.jadeLayout);
+      write(path + '/app/views/layouts/default.jade', genem.layout());
     });
     mkdir(path + '/app/views/includes', function () {
       write(path + '/app/views/includes/head.jade', '');
@@ -265,7 +265,7 @@ function createApplicationAt(path, app) {
       write(path + '/config/express.js', genem.express);
       write(path + '/config/routes.js', genem.routes(auth));
       if (auth) {
-        write(path + '/config/middlewares.js', genem.middlewares);
+        write(path + '/config/middlewares.js', genem.routeMiddleware());
       }
     });
 
@@ -289,7 +289,7 @@ function createApplicationAt(path, app) {
       var user = {
         model: genem.model('user', fields),
         controller: genem.controller('user', 'login'),
-        login: genem.template('login')
+        login: genem.template(app, 'login', '../')
       };
       write(path + '/app/models/user.js', user.model);
       write(path + '/app/controllers/users.js', user.controller);
@@ -308,7 +308,7 @@ function createApplicationAt(path, app) {
     // home MVC
     var home = {
       controller: genem.controller('home', 'index', false),
-      index: genem.template(app, 'Welcome!')
+      index: genem.template(app, 'Welcome!', '../')
     };
     write(path + '/app/controllers/home.js', home.controller);
     mkdir(path + '/app/views/home', function () {
