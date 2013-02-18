@@ -127,7 +127,7 @@ function createModel (path, name) {
 function createView (path, viewName) {
   var viewPath = path + '/app/views/' + viewName;
 
-  var view = function () {
+  function view () {
     mkdir(viewPath, function () {
 
       if (program.views) {
@@ -161,7 +161,7 @@ function createView (path, viewName) {
 function createController (path, controllerName) {
   var file = path + '/app/controllers/' + controllerName + '.js';
 
-  var controller = function () {
+  function controller () {
     mkdir(path + '/app/controllers/', function () {
       write(file, genem.controller);
 
