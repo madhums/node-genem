@@ -1,4 +1,11 @@
 
+0.0.2 / 2013-03-14 
+==================
+
+  * use appropriate consumer secret keys
+  * use appropriate oauth keys
+  * document methods
+
 0.0.1 / 2013-02-18 
 ==================
 
