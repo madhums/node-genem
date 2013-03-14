@@ -19,6 +19,7 @@ var genem = require('../')
   , path = program._args.shift() || '.'
   , os = require('os')
   , eol = 'win32' == os.platform() ? '\r\n' : '\n'
+  , inflection = require('inflection')
 
 
 program
@@ -193,6 +194,7 @@ function createController (path, controllerName) {
  */
 
 function createApplication(path, app) {
+  var app = inflection.camelize(app);
   emptyDirectory(path, function(empty){
     if (empty || program.force) {
       createApplicationAt(path, app);
