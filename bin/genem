@@ -250,11 +250,6 @@ function createApplicationAt(path, app) {
     mkdir(path + '/app/views');
     mkdir(path + '/app/controllers');
 
-    // helpers
-    mkdir(path + '/app/helpers', function () {
-      write(path + '/app/helpers/view.js', genem.viewHelper)
-    });
-
     // layouts and includes folder
     mkdir(path + '/app/views/layouts', function () {
       write(path + '/app/views/layouts/default.jade', genem.layout());
