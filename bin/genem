@@ -235,6 +235,9 @@ function createApplicationAt(path, app) {
     // readme
     write(path + '/README.md', '## ' + app + eol);
 
+    // .gitignore
+    write(path + '/.gitignore', 'node_modules');
+
     // public dir - js, css and img
     mkdir(path + '/public');
     mkdir(path + '/public/js');
