@@ -6,10 +6,6 @@
   * add gitingore
   * use common header, head and footer files
   * remove helpers and add view-helpers module
-  * Release 0.0.2
-  * use appropriate consumer secret keys
-  * use appropriate oauth keys
-  * document methods
 
 0.0.2 / 2013-03-14 
 ==================
