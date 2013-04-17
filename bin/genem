@@ -259,7 +259,7 @@ function createApplicationAt(path, app) {
     });
     mkdir(path + '/app/views/includes', function () {
       write(path + '/app/views/includes/head.jade', genem.head());
-      write(path + '/app/views/includes/header.jade', 'header#header');
+      write(path + '/app/views/includes/header.jade', genem.header(app));
       write(path + '/app/views/includes/footer.jade', 'footer#footer');
       write(path + '/app/views/includes/foot.jade', '');
     });
@@ -314,7 +314,7 @@ function createApplicationAt(path, app) {
     // home MVC
     var home = {
       controller: genem.controller('home', 'index', false),
-      index: genem.template(app, 'Welcome!', '../')
+      index: genem.template('', genem.intro(), '../')
     };
     write(path + '/app/controllers/home.js', home.controller);
     mkdir(path + '/app/views/home', function () {
