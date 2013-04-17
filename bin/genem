@@ -255,9 +255,9 @@ function createApplicationAt(path, app) {
       write(path + '/app/views/layouts/default.jade', genem.layout());
     });
     mkdir(path + '/app/views/includes', function () {
-      write(path + '/app/views/includes/head.jade', '');
-      write(path + '/app/views/includes/header.jade', '');
-      write(path + '/app/views/includes/footer.jade', '');
+      write(path + '/app/views/includes/head.jade', genem.head());
+      write(path + '/app/views/includes/header.jade', 'header#header');
+      write(path + '/app/views/includes/footer.jade', 'footer#footer');
       write(path + '/app/views/includes/foot.jade', '');
     });
 
