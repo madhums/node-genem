@@ -16,7 +16,6 @@ var genem = require('../')
   , mkdirp = require('mkdirp')
   , program = require('commander')
   , fs = require('fs')
-  , path = program._args.shift() || '.'
   , os = require('os')
   , eol = 'win32' == os.platform() ? '\r\n' : '\n'
   , inflection = require('inflection')
@@ -26,28 +25,28 @@ program
   .command('init <app>')
   .description('initialize app with name <app>')
   .action(function(app){
-    createApplication(path, app);
+    createApplication(app, app);
   });
 
 program
   .command('model <model>')
   .description('creates a mongoose model of name <model>')
   .action(function(model){
-    createModel(path, model);
+    createModel('.', model);
   });
 
 program
   .command('controller <controller>')
   .description('creates a controller of name <controller>')
   .action(function(controller){
-    createController(path, controller);
+    createController('.', controller);
   });
 
 program
   .command('view <view>')
   .description('creates a view of name <view>')
   .action(function(view){
-    createView(path, view);
+    createView('.', view);
   });
 
 program
