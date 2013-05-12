@@ -152,7 +152,6 @@ function createView (path, viewName) {
   }
 }
 
-
 /**
  * Generate controller
  *
@@ -185,7 +184,6 @@ function createController (path, controllerName) {
     });
   }
 }
-
 
 /**
  * Generate application
