@@ -1,8 +1,8 @@
-#!/usr/bin/env node
+#!/usr/bin/env nodeh
 
 /*!
  * genem
- * Copyright(c) 2012 Madhusudhan Srinivasa <madhums8@gmail.com>
+ * Copyright(c) 2014 Madhusudhan Srinivasa <madhums8@gmail.com>
  * MIT Licensed
  */
 
@@ -10,376 +10,67 @@
  * Module dependencies.
  */
 
-var genem = require('../')
-  , pkg = require('../package.json')
-  , version = pkg.version
-  , mkdirp = require('mkdirp')
-  , program = require('commander')
-  , fs = require('fs')
-  , path = program._args.shift() || '.'
-  , os = require('os')
-  , eol = 'win32' == os.platform() ? '\r\n' : '\n'
-  , inflection = require('inflection')
+var program = require('commander');
+var prompt = require('co-prompt');
+var fs = require('co-fs');
+var co = require('co');
+var pkg = require('../package.json');
+var dirs = [
+  'app/models',
+  'app/views',
+  'app/controllers',
+  'app/api',
+  'app/mailers',
+  'config/env',
+  'public/js',
+  'public/css',
+  'public/img',
+  'test'
+];
+var files = [
+  '.gitignore',
+  '.jshintrc',
+  '.jshintignore',
+  'package.json',
+  'README.md',
+  'CHANGELOG.md',
+  'server.js',
+  'test/test.js'
+  'public/css/app.css',
+  'config/routes.js',
+  'config/express.js',
+  'config/config.js',
+  'config/env/development.js',
+  'config/env/production.js',
+  'config/env/test.js'
+];
 
+program
+  .version(pkg.version)
+  .option('-v, --views <view>', 'Templating engine')
+  .option('-s, --session', 'Use sessions')
+  .option('-p, --passport', 'Use passport.js for auth');
 
 program
   .command('init <app>')
-  .description('initialize app with name <app>')
-  .action(function(app){
-    createApplication(path, app);
-  });
+  .description('Initialize an app')
+  .action(co(init));
 
 program
-  .command('model <model>')
-  .description('creates a mongoose model of name <model>')
-  .action(function(model){
-    createModel(path, model);
-  });
-
-program
-  .command('controller <controller>')
-  .description('creates a controller of name <controller>')
-  .action(function(controller){
-    createController(path, controller);
-  });
-
-program
-  .command('view <view>')
-  .description('creates a view of name <view>')
-  .action(function(view){
-    createView(path, view);
-  });
-
-program
-  .option('-f, --force', 'force on non-empty directory')
-  .option('-F, --fields <fields>', 'create fields for the model <model>')
-  .option('-M, --methods <methods>', 'create methods for the controller <controller>')
-  .option('-V, --views <views>', 'create views for the view <view>')
-  .option('-A, --auth <auth>', 'adds passport.js authentication (twitter|facebook|github|google)')
-  .version(version)
-
-
-program.on('--help', function() {
-  console.log('  Examples:')
-  console.log('')
-  console.log('    $ genem --help')
-  console.log('    $ genem init my_app')
-  console.log('    $ genem init my_app --auth twitter')
-  console.log('    $ genem model user')
-  console.log('    $ genem model article --fields name:string,description:string,location:boolean')
-  console.log('    $ genem controller users')
-  console.log('    $ genem controller users --methods create index show')
-  console.log('    $ genem view users')
-  console.log('    $ genem view users --views new edit show')
-  console.log('')
-  console.log('if you are facing any issues - https://github.com/madhums/node-genem/issues')
-  console.log('')
-})
-
-program.parse(process.argv)
+  .parse(process.argv);
 
 /**
- * Generate model
+ * init
  *
- * @param {String} path
- * @param {String} name - model name
+ * @param {String} app
+ * @api private
  */
 
-function createModel (path, name) {
-  var file = path + '/app/models/' + name + '.js';
-
-  function model () {
-    mkdir(path + '/app/models/', function () {
-      var fields = program.fields
-        ? program.fields.split(',')
-        : []
-
-      fields = fields.map(function (field, i) {
-        var name = field.split(':')[0];
-        var type = field.split(':')[1];
-        return { name: name, type: type }
-      });
-
-      write(file, genem.model(name, fields));
-    });
+function *init (app) {
+  var dir = process.cwd() + '/' + app;
+  yield fs.mkdir(dir);
+  process.chdir(dir);
+  for (var i = 0; i < dirs.length; i++) {
+    yield fs.mkdir(dirs[i]);
   }
-
-  if (!fs.existsSync(file) || program.force) {
-    model()
-  } else {
-    program.confirm('destination is not empty, continue? ', function (ok) {
-      if (ok) {
-        process.stdin.destroy();
-        model()
-      } else {
-        abort('aborting');
-      }
-    });
-  }
-}
-
-
-/**
- * Generate view
- *
- * @param {String} path
- */
-
-function createView (path, viewName) {
-  var viewPath = path + '/app/views/' + viewName;
-
-  function view () {
-    mkdir(viewPath, function () {
-
-      if (program.views) {
-        // create views <views>
-      }
-
-    });
-  }
-
-  if (!fs.existsSync(viewPath) || program.force) {
-    view()
-  } else {
-    program.confirm('destination is not empty, continue? ', function(ok){
-      if (ok) {
-        process.stdin.destroy();
-        view()
-      } else {
-        abort('aborting');
-      }
-    });
-  }
-}
-
-/**
- * Generate controller
- *
- * @param {String} path
- */
-
-function createController (path, controllerName) {
-  var file = path + '/app/controllers/' + controllerName + '.js';
-
-  function controller () {
-    mkdir(path + '/app/controllers/', function () {
-      write(file, genem.controller);
-
-      if (program.methods) {
-        // create methods in the controller
-      }
-    });
-  }
-
-  if (!fs.existsSync(file) || program.force) {
-    controller()
-  } else {
-    program.confirm('destination is not empty, continue? ', function(ok){
-      if (ok) {
-        process.stdin.destroy();
-        controller()
-      } else {
-        abort('aborting');
-      }
-    });
-  }
-}
-
-/**
- * Generate application
- *
- * @param {String} path
- */
-
-function createApplication(path, app) {
-  var app = inflection.camelize(app);
-  emptyDirectory(path, function(empty){
-    if (empty || program.force) {
-      createApplicationAt(path, app);
-    } else {
-      program.confirm('destination is not empty, continue? ', function(ok){
-        if (ok) {
-          process.stdin.destroy();
-          createApplicationAt(path, app);
-        } else {
-          abort('aborting');
-        }
-      });
-    }
-  });
-};
-
-/**
- * Create application at the given directory `path`.
- *
- * @param {String} path
- */
-
-function createApplicationAt(path, app) {
-  console.log();
-  process.on('exit', function(){
-    console.log();
-    console.log('   install dependencies:');
-    console.log('     $ cd %s && npm install', path);
-    console.log();
-    console.log('   run the app:');
-    console.log('     $ npm start');
-    console.log();
-  });
-
-  mkdir(path, function(){
-    var auth = program.auth;
-
-    // readme
-    write(path + '/README.md', '## ' + app + eol);
-
-    // .gitignore
-    write(path + '/.gitignore', 'node_modules');
-
-    // public dir - js, css and img
-    mkdir(path + '/public');
-    mkdir(path + '/public/js');
-    mkdir(path + '/public/img');
-    mkdir(path + '/public/css', function () {
-      var css = genem.css()
-      write(path + '/public/css/app.css', css);
-    });
-
-    // app dir - mvc
-    mkdir(path + '/app');
-    mkdir(path + '/app/models');
-    mkdir(path + '/app/views');
-    mkdir(path + '/app/controllers');
-
-    // layouts and includes folder
-    mkdir(path + '/app/views/layouts', function () {
-      write(path + '/app/views/layouts/default.jade', genem.layout());
-    });
-    mkdir(path + '/app/views/includes', function () {
-      write(path + '/app/views/includes/head.jade', genem.head());
-      write(path + '/app/views/includes/header.jade', genem.header(app));
-      write(path + '/app/views/includes/footer.jade', 'footer#footer');
-      write(path + '/app/views/includes/foot.jade', '');
-    });
-
-    // config dir - config, express and routes
-    mkdir(path + '/config');
-    mkdir(path + '/config', function () {
-      write(path + '/config/config.js', genem.config(app, auth));
-      write(path + '/config/express.js', genem.express);
-      write(path + '/config/routes.js', genem.routes(auth));
-      if (auth) {
-        write(path + '/config/middlewares.js', genem.routeMiddleware());
-      }
-    });
-
-    // package.json
-    var pkg = genem.pkg(auth);
-    pkg.name = app;
-    write(path + '/package.json', JSON.stringify(pkg, null, 2));
-
-    // if auth option is provided create user MVC
-    if (auth) {
-      var fields = [
-        { name: 'name', type: 'string' },
-        { name: 'email', type: 'string' },
-        { name: 'username', type: 'string' },
-        { name: 'provider', type: 'string' },
-        { name: 'hashed_password', type: 'string' },
-        { name: 'salt', type: 'string' }
-      ];
-
-      // user MVC
-      var user = {
-        model: genem.model('user', fields),
-        controller: genem.controller('user', 'login'),
-        login: genem.template(app, 'login', '../')
-      };
-      write(path + '/app/models/user.js', user.model);
-      write(path + '/app/controllers/users.js', user.controller);
-      mkdir(path + '/app/views/users', function () {
-        write(path + '/app/views/users/login.jade', user.login);
-      });
-
-      // passport
-      write(path + '/config/passport.js', genem.passport(auth.toLowerCase()));
-    }
-
-    // server (bootstrap)
-    var server = genem.server(auth);
-    write(path + '/server.js', server);
-
-    // home MVC
-    var home = {
-      controller: genem.controller('home', 'index', false),
-      index: genem.template('', genem.intro(), '../')
-    };
-    write(path + '/app/controllers/home.js', home.controller);
-    mkdir(path + '/app/views/home', function () {
-      write(path + '/app/views/home/index.jade', home.index);
-    });
-
-    // 500 and 404
-    var jade500 = genem.template('500', 'Internal error occured!');
-    var jade404 = genem.template('404', 'Not found!');
-    write(path + '/app/views/500.jade', jade500);
-    write(path + '/app/views/404.jade', jade404);
-
-    // test dir
-    mkdir(path + '/test', function () {
-      write(path + '/test/test.js', '');
-    });
-  });
-}
-
-/**
- * Check if the given directory `path` is empty.
- *
- * @param {String} path
- * @param {Function} fn
- */
-
-function emptyDirectory(path, fn) {
-  fs.readdir(path, function(err, files){
-    if (err && 'ENOENT' != err.code) throw err;
-    fn(!files || !files.length);
-  });
-}
-
-/**
- * echo str > path.
- *
- * @param {String} path
- * @param {String} str
- */
-
-function write(path, str) {
-  fs.writeFile(path, str);
-  console.log('   \x1b[36mcreate\x1b[0m : ' + path);
-}
-
-/**
- * Mkdir -p.
- *
- * @param {String} path
- * @param {Function} fn
- */
-
-function mkdir(path, fn) {
-  mkdirp(path, 0755, function(err){
-    if (err) throw err;
-    console.log('   \033[36mcreate\033[0m : ' + path);
-    fn && fn();
-  });
-}
-
-/**
- * Exit with the given `str`.
- *
- * @param {String} str
- */
-
-function abort(str) {
-  console.error(str);
-  process.exit(1);
 }

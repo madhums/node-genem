@@ -1,19 +1,28 @@
 {
-    "name": "genem"
-  , "version": "0.0.3"
-  , "description": "MVC generator for node using express and mongoose"
-  , "keywords": ["generator", "mvc", "express", "mongoose", "jade", "passport"]
-  , "author": "Madhusudhan Srinivasa <madhums8@gmail.com>"
-  , "repository": "git://github.com/madhums/node-genem"
-  , "bin": { "genem": "./bin/genem" }
-  , "dependencies": {
-        "commander": "latest"
-      , "mkdirp": "latest"
-      , "inflection": "latest"
-    }
-  , "devDependencies": {
-      "should": ">= 0.0.1"
-    }
-  , "main": "index"
-  , "engines": { "node": ">= 0.4.x" }
+  "name": "genem",
+  "version": "0.1.0",
+  "description": "MVC generator for node using express and mongoose",
+  "engines": {
+    "node": ">= 0.11.12"
+  },
+  "keywords": [
+    "generator",
+    "mvc",
+    "express",
+    "mongoose",
+    "passport"
+  ],
+  "author": "Madhusudhan Srinivasa <madhums8@gmail.com>",
+  "repository": "git://github.com/madhums/node-genem",
+  "bin": {
+    "genem": "./bin/genem"
+  },
+  "dependencies": {
+    "co": "^3.1.0",
+    "co-fs": "^1.2.0",
+    "co-prompt": "^1.0.0",
+    "commander": "^2.3.0",
+    "inflection": "^1.5.0"
+  },
+  "devDependencies": {}
 }
